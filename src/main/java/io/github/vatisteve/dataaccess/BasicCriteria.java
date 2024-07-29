@@ -1,4 +1,4 @@
-package io.github.vatisteve.data_access;
+package io.github.vatisteve.dataaccess;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -22,8 +22,18 @@ public class BasicCriteria extends SqlQueryConstants {
         return this;
     }
 
+    public BasicCriteria notEqualWithSingleQuote(String query) {
+        criteria.append(SPACE).append(SCREAMER).append(EQUAL).append(SPACE).append(SINGLE_QUOTE).append(query).append(SINGLE_QUOTE).append(SPACE);
+        return this;
+    }
+
     public BasicCriteria equalWithNumber(Number number) {
         criteria.append(SPACE).append(EQUAL).append(SPACE).append(number).append(SPACE);
+        return this;
+    }
+
+    public BasicCriteria notEqualWithNumber(Number number) {
+        criteria.append(SPACE).append(SCREAMER).append(EQUAL).append(SPACE).append(number).append(SPACE);
         return this;
     }
 
@@ -38,14 +48,19 @@ public class BasicCriteria extends SqlQueryConstants {
     }
 
     public BasicCriteria inFormat(String... elements) {
-        String wrappedElement = Arrays.stream(elements).map(SqlQueryConstants::wrapWithSingleQuote).collect(Collectors.joining(COMMA + SPACE));
+        String wrappedElement = Arrays.stream(elements).map(SqlQueryConstants::singleQuoteWrap).collect(Collectors.joining(COMMA + SPACE));
         criteria.append(SPACE).append(String.format(IN_FORMAT, wrappedElement)).append(SPACE);
         return this;
     }
 
     public BasicCriteria notInFormat(String... elements) {
-        String wrappedElement = Arrays.stream(elements).map(SqlQueryConstants::wrapWithSingleQuote).collect(Collectors.joining(COMMA + SPACE));
+        String wrappedElement = Arrays.stream(elements).map(SqlQueryConstants::singleQuoteWrap).collect(Collectors.joining(COMMA + SPACE));
         criteria.append(SPACE).append(String.format(NOT_IN_FORMAT, wrappedElement)).append(SPACE);
+        return this;
+    }
+
+    public BasicCriteria isTrue() {
+        criteria.append(SPACE).append(EQUAL).append(1);
         return this;
     }
 

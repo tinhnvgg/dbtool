@@ -1,5 +1,6 @@
 package io.github.vatisteve.metadata.core;
 
+import io.github.vatisteve.common.EnumResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -9,7 +10,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Getter
 @RequiredArgsConstructor
-public enum ReferenceActionType {
+public enum ReferenceActionType implements EnumResponse {
 
     NO_ACTION("No action"),
     CASCADE("Cascade"),
@@ -18,7 +19,9 @@ public enum ReferenceActionType {
 
     private final String label;
 
+    @Override
     public String getValue() {
         return name();
     }
+
 }

@@ -1,4 +1,4 @@
-package io.github.vatisteve.data_access;
+package io.github.vatisteve.dataaccess;
 
 /**
  * @author tinhnv
@@ -21,6 +21,7 @@ public class BasicQuery extends SqlQueryConstants {
         throw new QueryBuilderException(String.format("There are conflicts when building SQL query: %s", sqlQuery));
     }
 
+    // Select ...
     public BasicQuery select(String... elements) {
         sqlQuery.append(SELECT_KEYWORD).append(String.join(COMMA + SPACE, elements)).append(SPACE);
         if (selectClauseIsUsed) throwQueryBuilderException();
@@ -28,6 +29,7 @@ public class BasicQuery extends SqlQueryConstants {
         return this;
     }
 
+    // Select ...
     public BasicQuery selectMax(String element) {
         sqlQuery.append(SELECT_KEYWORD).append(String.format(MAX_FORMAT, element)).append(SPACE);
         if (selectClauseIsUsed) throwQueryBuilderException();
@@ -35,6 +37,7 @@ public class BasicQuery extends SqlQueryConstants {
         return this;
     }
 
+    // Select ...
     public BasicQuery countAll() {
         sqlQuery.append(SELECT_KEYWORD).append(COUNT_ALL).append(SPACE);
         if (selectClauseIsUsed) throwQueryBuilderException();
@@ -42,22 +45,44 @@ public class BasicQuery extends SqlQueryConstants {
         return this;
     }
 
-    // TODO update this method
+    // From ...
     public BasicQuery from(String table) {
         sqlQuery.append(FROM_KEYWORD).append(table).append(SPACE);
         return this;
     }
 
+    // Join ... (inner join)
+    public BasicQuery innerJoin(String table) {
+        sqlQuery.append(INNER_JOIN_KEYWORD).append(table).append(SPACE);
+        return this;
+    }
+
+    // Join on ...
+    public BasicQuery on(String leftTable, String rightTable, String onColumn) {
+        sqlQuery.append(ON).append(leftTable).append(DOT).append(onColumn).append(EQUAL)
+            .append(rightTable).append(DOT).append(onColumn).append(SPACE);
+        return this;
+    }
+
+    // ...
+    public BasicQuery append(String appendQuery) {
+        sqlQuery.append(appendQuery);
+        return this;
+    }
+
+    // Where ...
     public BasicQuery where(BasicCriteria criteria) {
         sqlQuery.append(WHERE_KEYWORD).append(criteria.toCriteriaString()).append(SPACE);
         return this;
     }
 
+    // Limit ...
     public BasicQuery limit(int limit) {
         sqlQuery.append(LIMIT_KEYWORD).append(limit).append(SPACE);
         return this;
     }
 
+    // Offset ...
     public BasicQuery offset(long offset) {
         sqlQuery.append(OFFSET_KEYWORD).append(offset).append(SPACE);
         return this;
@@ -65,6 +90,11 @@ public class BasicQuery extends SqlQueryConstants {
 
     public String toQueryString() {
         return sqlQuery.toString();
+    }
+
+    @Override
+    public String toString() {
+        return "Basic Query Builder: [" + toQueryString() + "]";
     }
 
 }

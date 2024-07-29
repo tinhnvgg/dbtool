@@ -1,6 +1,8 @@
-package io.github.vatisteve.data_access;
+package io.github.vatisteve.dataaccess;
 
 public class QueryBuilderException extends RuntimeException {
+
+    private static final long serialVersionUID = -5435644247868066261L;
 
     public QueryBuilderException(String message) {
         super(message);

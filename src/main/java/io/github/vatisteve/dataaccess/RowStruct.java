@@ -1,4 +1,4 @@
-package io.github.vatisteve.data_access;
+package io.github.vatisteve.dataaccess;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

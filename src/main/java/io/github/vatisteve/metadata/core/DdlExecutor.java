@@ -3,6 +3,8 @@ package io.github.vatisteve.metadata.core;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author tinhnv
@@ -24,15 +26,24 @@ public interface DdlExecutor extends AutoCloseable {
 
     void updateColumnDefinition(String columnName) throws SQLException;
 
-    void addColumnConstraint(ConstraintType constraintType, String columnName);
+    void addColumnConstraint(ConstraintType constraintType, String columnName) throws SQLException;
+
+    void dropColumnConstraint(ConstraintType constraintType, String constraintName) throws SQLException;
 
     Connection getConnection();
+    TableMetadata getTableMetadata();
     void logSqlQuery(String sql);
 
     default void executeSql(String sql) throws SQLException {
-        Statement statement = getConnection().createStatement();
         logSqlQuery(sql);
-        statement.execute(sql);
+        try (Statement statement = getConnection().createStatement()) {
+            statement.execute(sql);
+        }
+    }
+
+    default <T> Collection<T> collectionNullSafe(Collection<T> collection) {
+        if (collection == null) return Collections.emptyList();
+        return collection;
     }
 
 }

@@ -3,6 +3,8 @@ package io.github.vatisteve.metadata.mariadb;
 import io.github.vatisteve.metadata.core.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -13,18 +15,13 @@ import java.util.stream.Collectors;
  * @author tinhnv
  * @since Dec 20, 2023
  */
+@Slf4j
 @RequiredArgsConstructor
 @Getter
 public class MariadbDdlExecutor extends DdlQueryConstants implements DdlExecutor {
 
     private final TableMetadata tableMetadata;
     private final Connection connection;
-
-    // should move to utils class
-    public static <T> Collection<T> collectionNullSafe(Collection<T> collection) {
-        if (collection == null) return Collections.emptyList();
-        return collection;
-    }
 
     private static void removeTheLastComma(StringBuilder sql) {
         // sql contain 'append(COMMA).append(SPACE)'
@@ -41,22 +38,20 @@ public class MariadbDdlExecutor extends DdlQueryConstants implements DdlExecutor
             appendColumnSql(sql, c);
             sql.append(COMMA).append(SPACE);
             if (c.isPrimaryKey()) prs.add(c.getName());
-            if (c.getReference() != null) ref.put(c.getName(), c.getReference());
+            if (c.getReferenceMetadata() != null) ref.put(c.getName(), c.getReferenceMetadata());
         });
-        if (prs.isEmpty() && ref.isEmpty()) {
-            removeTheLastComma(sql);
-        } else {
+        if (!prs.isEmpty()) {
             sql.append(PRIMARY_KEY).append(OPEN_BRACKET)
                 .append(prs.stream().map(DdlQueryConstants::backtickWrap).collect(Collectors.joining(COMMA + SPACE)))
-                .append(CLOSE_BRACKET);
+                .append(CLOSE_BRACKET).append(COMMA).append(SPACE);
         }
         if (!ref.isEmpty()) {
             ref.forEach((columnName, refInfo) -> {
-                appendForeignKeyConstraint(sql, columnName, refInfo);
-                sql.append(COMMA);
+                appendForeignKeyConstraint(sql, backtickWrap(columnName), refInfo);
+                sql.append(COMMA).append(SPACE);
             });
-            removeTheLastComma(sql);
         }
+        removeTheLastComma(sql);
         sql.append(CLOSE_BRACKET);
         if (tableMetadata.getTablespace() != null) sql.append(" Engine = ").append(tableMetadata.getTablespace());
         //...
@@ -68,8 +63,10 @@ public class MariadbDdlExecutor extends DdlQueryConstants implements DdlExecutor
         if (!c.isNullable()) sql.append(" NOT NULL ");
         if (c.isIdentity()) sql.append(" AUTO_INCREMENT ");
         if (c.getColumnDefault() != null) appendDefaultColumnValue(sql, c.getColumnDefault());
-        if (c.getCheckConstraint() != null) sql.append(" CHECK ")
-            .append(OPEN_BRACKET).append(c.getCheckConstraint()).append(CLOSE_BRACKET);
+        if (c.getCheckConstraint() != null) {
+            sql.append(" CHECK ").append(OPEN_BRACKET).append(backtickWrap(c.getName()))
+                .append(SPACE).append(c.getCheckConstraint()).append(CLOSE_BRACKET);
+        }
     }
 
     private void appendDefaultColumnValue(StringBuilder sql, ColumnMetadata.DefaultColumnValue d) {
@@ -89,7 +86,7 @@ public class MariadbDdlExecutor extends DdlQueryConstants implements DdlExecutor
         switch (basicDataType) {
             case STRING:
             case SPATIAL:
-                sql.append(wrapWithSingleQuote(d.getValue().toString()));
+                sql.append(singleQuoteWrap(d.getValue().toString()));
                 break;
             case NUMERIC:
             case TEMPORAL:
@@ -100,7 +97,7 @@ public class MariadbDdlExecutor extends DdlQueryConstants implements DdlExecutor
     }
 
     private void appendForeignKeyConstraint(StringBuilder sql, String cn, ReferenceMetadata ref) {
-        sql.append(FOREIGN_KEY).append(SPACE).append(OPEN_BRACKET).append(cn).append(CLOSE_BRACKET)
+        sql.append(FOREIGN_KEY).append(SPACE).append(OPEN_BRACKET).append(cn).append(CLOSE_BRACKET).append(SPACE)
             .append(REFERENCES).append(SPACE).append(ref.getTableName()).append(OPEN_BRACKET)
             .append(ref.getColumnName()).append(CLOSE_BRACKET);
         if (ref.getOnDelete() != null) sql.append(" ON DELETE ").append(ref.getOnDelete().getLabel().toUpperCase());
@@ -115,6 +112,7 @@ public class MariadbDdlExecutor extends DdlQueryConstants implements DdlExecutor
     @Override
     public void renameTable(String newName) throws SQLException {
         executeSql("RENAME TABLE " + tableMetadata.getName() + " TO " + newName);
+        tableMetadata.setName(newName);
     }
 
     @Override
@@ -127,7 +125,7 @@ public class MariadbDdlExecutor extends DdlQueryConstants implements DdlExecutor
 
     private ColumnMetadata getColumnMetadata(String columnName) {
         return collectionNullSafe(tableMetadata.getColumnsMetadata()).stream()
-            .filter(c -> columnName.equals(c.getName()))
+            .filter(c -> StringUtils.equals(c.getName(), columnName))
             .findFirst().orElseThrow();
     }
 
@@ -150,18 +148,50 @@ public class MariadbDdlExecutor extends DdlQueryConstants implements DdlExecutor
     }
 
     @Override
-    public void addColumnConstraint(ConstraintType constraintType, String columnName) {
-        // TODO add column constraint
-        throw new UnsupportedOperationException("This function has not been implemented yet!");
+    public void addColumnConstraint(ConstraintType constraintType, String columnName) throws SQLException {
+        ColumnMetadata c = getColumnMetadata(columnName);
+        StringBuilder sql = new StringBuilder(ALTER_TABLE + tableMetadata.getName() + " ADD CONSTRAINT ");
+        switch (constraintType) {
+            case FOREIGN_KEY: {
+                appendForeignKeyConstraint(sql, columnName, c.getReferenceMetadata());
+                break;
+            }
+            case PRIMARY_KEY:
+            case CHECK:
+            case UNIQUE:
+            case NOT_NULL:
+                // implement for the rest of constraint types
+                throw new UnsupportedOperationException("Create " + constraintType + " constraint: The function has not been implemented yet!");
+        }
+        executeSql(sql.toString());
+    }
+
+    @Override
+    public void dropColumnConstraint(ConstraintType constraintType, String constraintName) throws SQLException {
+        String sql = ALTER_TABLE + tableMetadata.getName() + " DROP ";
+        switch (constraintType) {
+            case FOREIGN_KEY: {
+                sql += FOREIGN_KEY + SPACE + constraintName;
+                break;
+            }
+            case PRIMARY_KEY:
+            case CHECK:
+            case UNIQUE:
+            case NOT_NULL:
+                // implement for the rest of constraint types
+                throw new UnsupportedOperationException("Drop " + constraintType + " constraint: The function has not been implemented yet!");
+        }
+        executeSql(sql);
     }
 
     @Override
     public void logSqlQuery(String sql) {
-        // TODO: log
+        log.trace("SQL: {}", sql);
     }
 
     @Override
     public void close() throws Exception {
         connection.close();
     }
+
 }

@@ -1,4 +1,4 @@
-package io.github.vatisteve.data_access;
+package io.github.vatisteve.dataaccess;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 /**
  * Sample data struct with header list
@@ -20,7 +21,7 @@ import java.util.Map;
 @Builder
 public class DataStructDto {
 
-    private List<RowStruct> columns;
+    private Queue<RowStruct> columns;
     private List<Map<Integer, String>> values;
     private Pagination pagination;
 

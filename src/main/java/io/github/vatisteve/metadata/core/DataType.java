@@ -1,10 +1,12 @@
 package io.github.vatisteve.metadata.core;
 
+import io.github.vatisteve.common.EnumResponse;
+
 /**
  * @author tinhnv
  * @since Dec 19, 2023
  */
-public interface DataType {
+public interface DataType extends EnumResponse {
 
     String name();
 

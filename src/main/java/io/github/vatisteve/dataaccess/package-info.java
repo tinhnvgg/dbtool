@@ -5,4 +5,4 @@
  * @since Oct 31, 2023
  *
  */
-package io.github.vatisteve.data_access;
+package io.github.vatisteve.dataaccess;

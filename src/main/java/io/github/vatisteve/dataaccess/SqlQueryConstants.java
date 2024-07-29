@@ -1,4 +1,4 @@
-package io.github.vatisteve.data_access;
+package io.github.vatisteve.dataaccess;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SqlQueryConstants {
 
+    protected static final String BACKTICK = "`";
     protected static final String SINGLE_QUOTE = "'";
     protected static final String DOUBLE_QUOTE = "\"";
     protected static final String EQUAL = "=";
@@ -50,11 +51,21 @@ public class SqlQueryConstants {
     public static final String OPEN_BRACKET = "(";
     public static final String CLOSE_BRACKET = ")";
     public static final String QUESTION_MARK = "?";
+    public static final String SCREAMER = "!";
 
     public static final String TRUE = "TRUE";
     public static final String FALSE = "FALSE";
 
-    public static String wrapWithSingleQuote(String s) {
+    public static String singleQuoteWrap(String s) {
         return SINGLE_QUOTE + s + SINGLE_QUOTE;
     }
+
+    public static String backtickWrap(String s) {
+        return BACKTICK + s + BACKTICK;
+    }
+
+    public static String roundBracketWrap(String s) {
+        return OPEN_BRACKET + s + CLOSE_BRACKET;
+    }
+
 }

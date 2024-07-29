@@ -1,6 +1,6 @@
 package io.github.vatisteve.metadata.core;
 
-import io.github.vatisteve.data_access.SqlQueryConstants;
+import io.github.vatisteve.dataaccess.SqlQueryConstants;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -21,9 +21,5 @@ public class DdlQueryConstants extends SqlQueryConstants {
     protected static final String PRIMARY_KEY = "PRIMARY KEY";
     protected static final String FOREIGN_KEY = "FOREIGN KEY";
     protected static final String REFERENCES = "REFERENCES";
-
-    protected static String backtickWrap(String content) {
-        return "`" + content + "`";
-    }
 
 }
