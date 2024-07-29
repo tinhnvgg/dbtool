@@ -10,6 +10,10 @@ public interface DataType extends EnumResponse {
 
     String name();
 
+    default String getKeyWord() {
+        return name();
+    }
+
     default String getLabel() {
         return name();
     }
